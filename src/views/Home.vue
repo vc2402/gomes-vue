@@ -29,13 +29,7 @@ export default class Home extends Vue {
     console.log("on: roomsChanged!");
     this.reloadRooms();
   }
-  // created() {
-  //   console.log("ready: setting roomsChanged event listener");
-  //   this.$on( "roomsChanged", () => {
-  //     console.log("on: roomsChanged!");
-  //     this.reloadRooms();
-  //   });
-  // }
+
 
   reloadRooms() {
     (this.$refs.rooms as Rooms).loadRooms();

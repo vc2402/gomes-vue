@@ -72,6 +72,7 @@
         </v-card>
       </form>    
     </v-dialog>
+    <UserPreferencesDialog ref="userPrefs" />
     <!-- <v-content>
       <Home/>
     </v-content> -->
@@ -83,20 +84,22 @@
 import { Component, Vue, Provide } from 'vue-property-decorator';
 import { LoginManager, LoginEvent } from './plugins/loginManager';
 import Home from './views/Home.vue';
-import gql from 'graphql-tag';
+// import gql from 'graphql-tag';
 import VueRx from 'vue-rx'
 import Router from 'vue-router';
+import UserPreferencesDialog from './components/userPreferencesDialog.vue';
 
-const LOGIN_MUTATION = gql`
-  mutation Login($credentials: LoginInput) {
-    login(credentials: $credentials) {
-      token
-    }
-}`;
+// const LOGIN_MUTATION = gql`
+//   mutation Login($credentials: LoginInput) {
+//     login(credentials: $credentials) {
+//       token
+//     }
+// }`;
 
 @Component({
   components: {
     Home,
+    UserPreferencesDialog
   },
 })
 export default class App extends Vue {
@@ -113,7 +116,12 @@ export default class App extends Vue {
   created() {
     this.loginManager.start(this.$router.currentRoute.path);
     this.$subscribeTo(this.loginManager.eventSource, (ev:LoginEvent) => {
-      this.loggedIn(ev && ev.event == "logged-in")
+      // console.log("loginManager event: ", ev);
+      if( ev && ev.event == "modified") {
+        this.name = this.loginManager.user!.name;
+      } else
+        this.loggedIn(ev && ev.event == "logged-in")
+      
     });
     this.loggedIn( this.loginManager.loggedIn );
   }
@@ -140,7 +148,7 @@ export default class App extends Vue {
     this.loginManager.logout();
   }
   changeUserInfo() {
-
+    (this.$refs.userPrefs as UserPreferencesDialog).show();
   }
 }
 </script>

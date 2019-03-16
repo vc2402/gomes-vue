@@ -3,15 +3,21 @@ import {Observable, Subscriber, Subject} from 'rxjs';
 
 export function GetBaseURL() { return BaseURL + "/api/query"; }
 export var BaseURL: string = "http://localhost:8086";
-export type LoginEventKind = "logged-in"|"logged-out";
+export type LoginEventKind = "logged-in"|"logged-out"|"modified";
 export interface LoginEvent {
   event: LoginEventKind;
+}
+export interface UserProperties {
+  name?: string;
+  login?: string;
+  password?: string;
 }
 export interface User {
   id: string;
   name: string;
   login: string;
   created: number;
+  modified: number;
   roles: string[];
 }
 export class LoginManager {
@@ -54,13 +60,10 @@ export class LoginManager {
     }
   }
   async validateLogin() {
-    if( this.token ) {
       try {
-        let me = await axios.get(BaseURL + "/api/user/me",
-                {headers: {authorization: "Bearer " + this.token}} );
-        if( me.data && me.data.player ) {
+        let me = await this.me();
+        if( me ) {
           this.loggedIn = true;
-          this.user = me.data.player;
           localStorage.setItem('token', this.token!);
           console.log("login: success: ", this.token);
           this.eventSource.next({event:"logged-in"});
@@ -69,10 +72,27 @@ export class LoginManager {
       } catch( exc ) {
 
       }
-    } 
+     
     if(this.loggedIn)
       this.logout();
     return false;
+  }
+
+  async me(): Promise<User|undefined> {
+    if( this.token ) {
+      try {
+        let me = await axios.get(BaseURL + "/api/user/me",
+                {headers: {authorization: "Bearer " + this.token}} );
+        if( me.data && me.data.player ) {
+          this.user = me.data.player;
+          return this.user;
+        }
+      } catch( exc ) {
+        console.log("me: exception: ", exc);
+        
+      }
+    }
+    return undefined;
   }
 
   logout() {
@@ -81,6 +101,31 @@ export class LoginManager {
       localStorage.removeItem("token");
       this.user = undefined;
       this.eventSource.next({event:"logged-out"});
+    }
+  }
+
+  async set( props: UserProperties ) {
+    if( this.token ) {
+      // console.log("set: ", props);
+      try {
+        let res = await axios.post(BaseURL + "/api/user/me",
+          props,
+          {headers: {authorization: "Bearer " + this.token}}
+        );
+        if( res.status == 200 ) {
+          await this.me();
+          this.eventSource.next({event:"modified"});
+          return true;
+        } else {
+          console.log("set: result: ", res);
+          return false;
+        }
+      } catch( exc ) {
+        console.log("set: exception: ", exc);
+        return false;
+      }
+    } else {
+      throw "unathorised";
     }
   }
 }
