@@ -8,6 +8,7 @@
         </v-layout>
       </v-flex>  
       <v-flex  sm4 md3 lg2 class="game-state">{{r.state}}</v-flex>
+      <v-btn color="success" @click="goToRoom(r.id)">Открыть</v-btn>
       <v-spacer></v-spacer>
     </v-layout>
   </v-container>
@@ -17,22 +18,29 @@
 import { Component, Prop, Vue, Inject } from 'vue-property-decorator';
 import VueApollo from 'vue-apollo';
 import gql from 'graphql-tag';
+import Router from 'vue-router';
 import { LoginManager, LoginEvent } from '../plugins/loginManager';
 import VueRx from 'vue-rx'
 
 const LIST_ROOMS_QUERY = gql`
-  query ListRoomsQuery {
-    listRooms {
+  query ListRoomsQuery($all: Boolean) {
+    listRooms(all: $all) {
       id
       name
       game {
+        id
         name
       }
       players {
         player {
+          id
           name
         }
         status
+      }
+      owner {
+        id
+        name
       }
       state
     }
@@ -41,11 +49,13 @@ const LIST_ROOMS_QUERY = gql`
 @Component
 export default class Rooms extends Vue {
   @Inject("loginManager") loginManager:LoginManager|undefined;
+  @Prop() showAll: boolean = false;
   rooms: any[] = [];
   loadRooms() {
     this.$apollo.query( {
       query: LIST_ROOMS_QUERY,
       fetchPolicy: "network-only",
+      variables: {all: this.showAll}
     })
     .then( ({data, errors}) => {
       if( data ) {
@@ -61,6 +71,10 @@ export default class Rooms extends Vue {
         console.log("Exception was caught: ", err);
       }
     })
+  }
+  goToRoom(id: string) {
+    console.log("goToRoom: ", id);
+    this.$router.push({ name: 'room', params: { id: id } })
   }
   created() {
     // console.log("created!");

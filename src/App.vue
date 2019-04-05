@@ -1,6 +1,6 @@
 <template>
   <v-app dark>
-    <v-toolbar app>
+    <v-toolbar >
       <v-toolbar-title class="headline text-uppercase">
         <span>Gomes</span>
         <span class="font-weight-light">(Vue client)</span>
@@ -10,7 +10,10 @@
       <v-tooltip v-if="name" bottom>
         <template v-slot:activator="{ on }">
           <v-btn flat icon color="primary" @click="changeUserInfo()" v-on="on">
-            <v-icon>person</v-icon>
+            <!-- <v-icon>person</v-icon> -->
+            <v-avatar size="36">
+              <img :src="avatar">
+            </v-avatar>
           </v-btn>
         </template>
         <span>Посмотреть свои параметры</span>
@@ -30,7 +33,7 @@
       persistent
     >
       <form>
-        <v-card @keydown:enter="login()">
+        <v-card >
           <v-card-title
             class="headline lighten-2"
             primary-title
@@ -44,11 +47,15 @@
               <v-text-field
                 label="логин"
                 id="login"
+                autofocus
                 v-model="username"
+                @keyup.enter="next()"
               ></v-text-field>
               <v-text-field
                 label="пароль"
                 id="password"
+                ref="password"
+                @keyup.enter="login()"
                 :append-icon="showPassword ? 'visibility' : 'visibility_off'"
                 @click:append="() => (showPassword = !showPassword)"
                 :type="showPassword ? 'text' : 'password'"
@@ -108,6 +115,7 @@ export default class App extends Vue {
   private username: string = "";
   private password: string = "";
   private name: string = "";
+  private avatar: string = "";
   private showPassword: boolean = false;
   constructor() {
     super();
@@ -118,7 +126,7 @@ export default class App extends Vue {
     this.$subscribeTo(this.loginManager.eventSource, (ev:LoginEvent) => {
       // console.log("loginManager event: ", ev);
       if( ev && ev.event == "modified") {
-        this.name = this.loginManager.user!.name;
+        this.setProperties();
       } else
         this.loggedIn(ev && ev.event == "logged-in")
       
@@ -128,11 +136,15 @@ export default class App extends Vue {
   loggedIn(really: boolean) {
     if( really ) {
       this.showLoginDialog = false;
-      this.name = this.loginManager.user!.name;
+      this.setProperties();
     } else {
       this.showLoginDialog = true;
       this.name = "";
     }
+  }
+  setProperties() {
+      this.name = this.loginManager.user!.name;
+      this.avatar = this.loginManager.user!.avatarSrc;
   }
   async login() {
     try {
@@ -143,6 +155,12 @@ export default class App extends Vue {
       console.log("Exception: ", exc);
       
     }
+  }
+  next() {
+    let pswd: any = this.$refs.password;
+    
+    if( typeof pswd.focus == "function" )
+      pswd.focus();
   }
   logout() {
     this.loginManager.logout();

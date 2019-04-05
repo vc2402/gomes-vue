@@ -88,7 +88,8 @@ export default class Games extends Vue {
   // apollo: any = {rooms: {query:LIST_GAMES_QUERY}};
   public async loadGames() {
     this.$apollo.query( {
-      query: LIST_GAMES_QUERY
+      query: LIST_GAMES_QUERY,
+      fetchPolicy: "network-only",
     })
     .then( ({data, errors}) => {
       if( data ) { 

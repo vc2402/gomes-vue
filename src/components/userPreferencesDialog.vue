@@ -18,19 +18,35 @@
           class="headline lighten-2"
           primary-title
         >
-          Параметры пользователя
+        <v-layout row justify-space-between>
+          <v-flex >
+            Параметры пользователя
+          </v-flex>
+          <!-- <v-flex class="avatar-select">
+            <AvatarSelect v-model="avatar"/>
+          </v-flex> -->
+        </v-layout>
         </v-card-title>
 
         <v-card-text>
           <v-layout column>
-            <v-layout row wrap justify-space-around>
-              <v-flex sm12 md5 lg4>
+            <v-layout row wrap justify-space-around align-content-end>
+              <v-flex class="avatar-select">
+                <AvatarSelect v-model="avatar"/>
+              </v-flex>              
+              <v-flex sm8 md10 lg3 align-self-center>
                 <v-text-field
                   label="логин"
                   v-model="login"
                 ></v-text-field>
               </v-flex>
-              <v-flex sm12 md5 lg4>
+              <v-flex sm12 md5 lg3 align-self-center>
+                <v-text-field
+                  label="email"
+                  v-model="email"
+                ></v-text-field>
+              </v-flex>
+              <v-flex sm12 md5 lg3 align-self-center>
                 <v-text-field
                   label="имя"
                   v-model="userName"
@@ -100,15 +116,21 @@ import VueApollo from 'vue-apollo';
 import { LoginManager, LoginEvent, UserProperties } from '../plugins/loginManager';
 import VueRx from 'vue-rx'
 import { DateTimeFilter} from '../filters/dateTimeFilter';
+import AvatarSelect from '@/components/avatarSelect.vue';
 
 @Component({
   filters: {
     date: DateTimeFilter,
+  },
+  components: {
+    AvatarSelect,
   }
 })
 export default class UserPreferencesDialog extends Vue {
   @Inject("loginManager") loginManager:LoginManager|undefined;
   private login: string = "";
+  private email: string = "";
+  private avatar: string = "";
   private userName: string = "";
   private password: string = "";
   private password2: string = "";
@@ -127,11 +149,11 @@ export default class UserPreferencesDialog extends Vue {
     }
     let up: UserProperties = {};
     let modified: boolean = false;
-    if( this.userName && this.userName != this.loginManager.user.name ) {
+    if( this.userName && this.userName != this.loginManager!.user!.name ) {
       modified = true;
       up.name = this.userName;
     }
-    if( this.login && this.login != this.loginManager.user.login ) {
+    if( this.login && this.login != this.loginManager!.user!.login ) {
       modified = true;
       up.login = this.login;
     }
@@ -139,10 +161,18 @@ export default class UserPreferencesDialog extends Vue {
       modified = true;
       up.password = this.password;
     }
+    if( this.email != this.loginManager!.user!.email ) {
+      modified = true;
+      up.email = this.email;
+    }
+    if( this.avatar != this.loginManager!.user!.avatar ) {
+      modified = true;
+      up.avatar = this.avatar;
+    }
     if( modified ) {
       this.loading = true;
       try {
-        let res = await this.loginManager.set(up);
+        let res = await this.loginManager!.set(up);
         if( !res ) {
           this.problem = "Произошла ошибка при сохранении изменений";
           return;
@@ -182,5 +212,9 @@ export default class UserPreferencesDialog extends Vue {
   left: calc(50% - 24px);
   top: calc(50% - 24px);
   z-index: 1000;
+}
+.avatar-select {
+  width: 92px;
+  max-width: 92px;
 }
 </style>

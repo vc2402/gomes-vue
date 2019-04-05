@@ -1,5 +1,6 @@
 import axios from 'axios'
 import {Observable, Subscriber, Subject} from 'rxjs';
+import { Avatars } from '@/etc/avatars';
 
 export function GetBaseURL() { return BaseURL + "/api/query"; }
 export var BaseURL: string = "http://localhost:8086";
@@ -11,14 +12,19 @@ export interface UserProperties {
   name?: string;
   login?: string;
   password?: string;
+  email?: string;
+  avatar?: string;
 }
 export interface User {
   id: string;
   name: string;
   login: string;
+  email: string;
+  avatar: string;
   created: number;
   modified: number;
   roles: string[];
+  avatarSrc: string;
 }
 export class LoginManager {
   eventSource: Subject<LoginEvent> = new Subject();
@@ -85,6 +91,13 @@ export class LoginManager {
                 {headers: {authorization: "Bearer " + this.token}} );
         if( me.data && me.data.player ) {
           this.user = me.data.player;
+          if( this.user!.avatar ) {
+            let an = parseInt(this.user!.avatar);
+            if( !isNaN( an ) )
+              this.user!.avatarSrc = Avatars[this.user!.avatar];
+          } 
+          if( !this.user!.avatarSrc )
+            this.user!.avatarSrc = Avatars["0"];
           return this.user;
         }
       } catch( exc ) {
@@ -106,7 +119,7 @@ export class LoginManager {
 
   async set( props: UserProperties ) {
     if( this.token ) {
-      // console.log("set: ", props);
+      console.log("set: ", props);
       try {
         let res = await axios.post(BaseURL + "/api/user/me",
           props,
